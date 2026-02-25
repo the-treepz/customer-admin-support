@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/constant";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -7,7 +8,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const url = new URL(`${process.env.NEXT_PUBLIC_API_BASE_URL}payments`);
+    const url = new URL(`${API_BASE_URL}payments`);
 
     req.nextUrl.searchParams.forEach((value, key) => {
       url.searchParams.set(key, value);

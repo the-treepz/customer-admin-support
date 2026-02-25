@@ -5,23 +5,21 @@ import {
   FetchFlightPaymentParams,
   FetchFlightsBookingParams,
 } from '@/types/api_booking';
+import { API_BASE_URL } from '@/constant';
 
-const ADMIN_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function login(
   email: string,
   password: string,
 ): Promise<LoginResponse> {
-  console.log('login() called with:', email);
   try {
-    const res = await fetch(`${ADMIN_API_BASE_URL}auth/sign-in`, {
+    const res = await fetch(`${API_BASE_URL}auth/sign-in`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
 
     const json = await res.json();
-    console.log('login response:', json);
 
     if (!json.status || !json.data?.token) {
       return {
@@ -69,7 +67,6 @@ export async function fetchFlights(
   }
 
   const json = await res.json();
-  console.log('login response:', json);
 
   return {
     data: json.data?.bookings ?? [],
@@ -110,14 +107,12 @@ export async function fetchAllPayment(
 export async function fetchFlightById(
   bookingId: string,
 ): Promise<ApiBookingDetailResponse> {
-  console.log('📡 fetchFlightById →', bookingId);
   const res = await fetch(`/api/bookings/${bookingId}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
     cache: 'no-store',
   });
 
-  console.log('📬 Response status:', res.status);
 
   if (!res.ok) {
     const err = await res.json().catch(() => null);

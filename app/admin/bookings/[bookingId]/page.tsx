@@ -22,15 +22,11 @@ import { Separator } from "@/components/ui/separator"
 export default function BookingDetailPage() {
   const { bookingId } = useParams<{ bookingId: string }>()
 
-  console.log("📌 Route param bookingId:", bookingId)
-
   const [data, setData] = useState<ApiBookingDetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    console.log("🔁 useEffect triggered")
-
     if (!bookingId) {
       console.warn("⚠️ bookingId is undefined")
       return
@@ -38,16 +34,13 @@ export default function BookingDetailPage() {
 
     const load = async () => {
       try {
-        console.log("🚀 Calling fetchFlightById with:", bookingId)
         setLoading(true)
         const res = await fetchFlightById(bookingId)
-        console.log("✅ API response received:", res)
         setData(res)
       } catch (err: any) {
         console.error("❌ fetchFlightById failed:", err)
         setError(err.message)
       } finally {
-        console.log("🏁 Fetch finished")
         setLoading(false)
       }
     }
@@ -56,12 +49,10 @@ export default function BookingDetailPage() {
   }, [bookingId])
 
   if (loading) {
-    console.log("⏳ Page still loading")
     return <Spinner className="h-8 w-8 mx-auto mt-20" />
   }
 
   if (error) {
-    console.log("🔥 Render error state:", error)
     return <p className="text-red-600 text-center mt-20">{error}</p>
   }
 
@@ -69,8 +60,6 @@ export default function BookingDetailPage() {
     console.warn("⚠️ No data after loading")
     return <p className="text-center mt-20">No booking found</p>
   }
-
-  console.log("🧾 Rendering booking page")
 
   const { bookingSummary, userInfo, flightInfo, paymentInfo } = data.data
 

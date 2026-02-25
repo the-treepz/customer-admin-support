@@ -1,18 +1,19 @@
+import { API_BASE_URL } from '@/constant';
 import { NextResponse } from 'next/server';
+
 
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/sign-in`,
+      `${API_BASE_URL}auth/sign-in`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       },
     );
-    console.log('API BASE URL:', process.env);
 
     const json = await res.json();
 

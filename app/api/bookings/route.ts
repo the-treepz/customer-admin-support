@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/constant";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -5,7 +6,7 @@ export async function GET(req: NextRequest) {
     const token = req.cookies.get("treepz_admin_token")?.value;
     if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const url = new URL(`${process.env.NEXT_PUBLIC_API_BASE_URL}bookings`);
+    const url = new URL(`${API_BASE_URL}bookings`);
 
     // Forward query params
     req.nextUrl.searchParams.forEach((value, key) => {
