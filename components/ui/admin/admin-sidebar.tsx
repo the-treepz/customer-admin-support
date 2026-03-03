@@ -54,11 +54,11 @@ export function AdminSidebar() {
       <SidebarContent>
         {/* Brand */}
         <SidebarGroup>
-          <SidebarGroupLabel className="font-bold flex items-center gap-2 mb-4">
+          <SidebarGroupLabel className="font-bold flex items-center gap-2 m-2">
             <Image
               className="object-contain cursor-pointer"
               unoptimized
-              src="/treepz.png"   // place your PNG inside /public
+              src="/treepz.png" 
               alt="Treepz Logo"
               width={100}
               height={100}
