@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -53,9 +54,18 @@ export function AdminSidebar() {
       <SidebarContent>
         {/* Brand */}
         <SidebarGroup>
-          <SidebarGroupLabel className="font-bold">
-              Treepz Admin
-              </SidebarGroupLabel>
+          <SidebarGroupLabel className="font-bold flex items-center gap-2 mb-4">
+            <Image
+              className="object-contain cursor-pointer"
+              unoptimized
+              src="/treepz.png"   // place your PNG inside /public
+              alt="Treepz Logo"
+              width={100}
+              height={100}
+              priority
+            />
+          </SidebarGroupLabel>
+
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
@@ -81,9 +91,10 @@ export function AdminSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-            onClick={handleLogout}
-            tooltip='Logout'
-            className="text-red-600 hover:text-red-700">
+              onClick={handleLogout}
+              tooltip="Logout"
+              className="text-red-600 hover:text-red-700"
+            >
               <LogOut />
               <span>Logout</span>
             </SidebarMenuButton>
