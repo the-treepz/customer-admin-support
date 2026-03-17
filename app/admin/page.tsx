@@ -52,7 +52,7 @@ const AdminDashboard = () => {
   const [currency, setCurrency] = useState<Currency>('NGN')
   const [rates, setRates] = useState<Record<string, number>>({})
   const [allPayments, setAllPayments] = useState<Payment[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true);
 
 
   const amountToNumber = (amount: number | string) =>
