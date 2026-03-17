@@ -15,7 +15,7 @@ import { Currency, Payment, PaymentStatus } from "@/types/payment"
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { fetchExchangeRates } from "@/lib/exchange-rate"
-
+import { convertCurrency, formatCurrency } from "@/lib/currency"
 
 function StatusBadge({ status }: { status: BookingStatus }) {
   const styles: Record<BookingStatus, string> = {
@@ -83,7 +83,7 @@ const AdminDashboard = () => {
     };
   }, [allPayments, totalBookings]);
 
-  useEffect(() => {  
+  useEffect(() => {
     if (bookingType === 'hotel') {
       setBookings([])
       setTotalBookings(0)
@@ -229,11 +229,11 @@ const AdminDashboard = () => {
               <TableCell className="font-medium">
                 <StatusBadge status={booking.status} />
               </TableCell>
-              <TableCell className="font-medium">
-                {convertAmount(booking.totalAmount).toLocaleString(undefined, {
-                  style: "currency",
-                  currency,
-                })}
+              <TableCell>
+                {formatCurrency(
+                  convertCurrency(booking.totalAmount, currency, rates),
+                  currency
+                )}
               </TableCell>
               <TableCell className="font-medium">
                 {new Date(booking.created).toLocaleDateString()}
