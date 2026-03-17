@@ -99,7 +99,7 @@ const AdminDashboard = () => {
         ])
 
         setBookings(Array.isArray(flightsRes.data) ? flightsRes.data : [])
-        setTotalBookings(flightsRes.total ?? 0)
+        setTotalBookings(flightsRes.total ?? 0,)
         setAllPayments(Array.isArray(paymentsRes.data) ? paymentsRes.data : [])
       } catch (error: any) {
         console.error("Dashboard fetch error:", error)

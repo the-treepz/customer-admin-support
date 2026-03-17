@@ -18,6 +18,8 @@ import { PaginationControl } from "@/components/ui/pagination-control"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { fetchExchangeRates } from "@/lib/exchange-rate"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { convertCurrency, formatCurrency } from "@/lib/currency"
 
 const PAGE_SIZE = 20
 
@@ -108,29 +110,26 @@ const PaymentPage = () => {
     loadRates()
   }, [])
 
-    const filteredPayments = useMemo(() => {
-      if (!debouncedSearch) return payments
-  
-      return payments.filter((payments) =>
-        payments.paymentId.toLowerCase().includes(debouncedSearch) ||
-        payments.user.toLowerCase().includes(debouncedSearch)
-      )
-    }, [payments, debouncedSearch])
+  const filteredPayments = useMemo(() => {
+    if (!debouncedSearch) return payments
 
-      const effectiveTotal = debouncedSearch
+    return payments.filter((payments) =>
+      payments.paymentId.toLowerCase().includes(debouncedSearch) ||
+      payments.user.toLowerCase().includes(debouncedSearch)
+    )
+  }, [payments, debouncedSearch])
+
+  const effectiveTotal = debouncedSearch
     ? filteredPayments.length
     : totalPayments
 
-      const totalPages = Math.max(1, Math.ceil(effectiveTotal / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(effectiveTotal / PAGE_SIZE))
 
-      const paginatedPayment = filteredPayments
-
-  const convertAmount = (amount: number) => {
-    if (currency === "NGN") return amount
-    return rates[currency]
-      ? amount * rates[currency]
-      : amount
-  }
+  const paginatedPayment = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE
+    const end = start + PAGE_SIZE
+    return filteredPayments.slice(start, end)
+  }, [filteredPayments, currentPage])
 
   if (loading) {
     return (
@@ -152,36 +151,52 @@ const PaymentPage = () => {
           className="bg-white max-w-sm"
         />
 
-        <select
-          value={statusFilter}
-          onChange={(e) =>
-            setStatusFilter(
-              e.target.value === "all"
+        <div>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) =>
+              setStatusFilter(value === "all"
                 ? "all"
-                : normalizeStatus<PaymentStatus>(e.target.value)
-            )
-          }
-          className="border rounded px-2 py-1"
-        >
-          <option value="all">All</option>
-          <option value="success">Success</option>
-          <option value="paid">Paid</option>
-          <option value="pending">Pending</option>
-          <option value="cancelled">Cancelled</option>
-          <option value="failed">Failed</option>
-        </select>
+                : normalizeStatus<PaymentStatus>(value)
+              )
+            }
+          >
+            <SelectTrigger className="w-140px h-9 bg-muted/30 border-none">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="success">Success</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
 
-        <select
-          value={currency}
-          onChange={(e) => setCurrency(e.target.value as Currency)}
-          className="border rounded px-2 py-1 bg-white"
-        >
-          {SUPPORTED_CURRENCIES.map((cur) => (
-            <option key={cur} value={cur}>
-              {cur}
-            </option>
-          ))}
-        </select>
+        <div>
+          <Select
+            value={currency}
+            onValueChange={(value) => setCurrency(value as Currency)}
+          >
+            <SelectTrigger className="w-140px h-9">
+              <SelectValue placeholder="Currency" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {SUPPORTED_CURRENCIES.map((cur) => (
+                  <SelectItem key={cur} value={cur}>
+                    {cur}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+        </div>
 
         <Button
           variant="outline"
@@ -245,13 +260,12 @@ const PaymentPage = () => {
                     <TableCell>
                       <StatusBadge status={payment.status} />
                     </TableCell>
-                    <TableCell>
-                      {convertAmount(payment.amount).toLocaleString(undefined, {
-                        style: "currency",
-                        currency,
-                      })}
+                    <TableCell className="text-right">
+                      {formatCurrency(
+                        convertCurrency(`NGN ${payment.amount}`, currency, rates),
+                        currency
+                      )}
                     </TableCell>
-
                     <TableCell>{payment.provider}</TableCell>
                   </TableRow>
                 ))
@@ -279,3 +293,7 @@ const PaymentPage = () => {
 }
 
 export default PaymentPage
+
+
+
+

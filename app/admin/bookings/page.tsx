@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { convertCurrency, formatCurrency } from "@/lib/currency"
 
 import { Badge } from '@/components/ui/badge'
 import {
@@ -18,11 +19,11 @@ import { PaginationControl } from '@/components/ui/pagination-control'
 import { Spinner } from '@/components/ui/spinner'
 
 import { fetchFlights } from '@/lib/api'
-import { Booking, BookingStatus, BookingType, SUPPORTED_CURRENCIES } from '@/types/booking'
+import { Booking, BookingStatus, SUPPORTED_CURRENCIES } from '@/types/booking'
 import { fetchExchangeRates } from '@/lib/exchange-rate'
 import { Currency } from '@/types'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const UI_PAGE_SIZE = 20
 
 function StatusBadge({ status }: { status: BookingStatus }) {
   const styles: Record<BookingStatus, string> = {
@@ -35,6 +36,7 @@ function StatusBadge({ status }: { status: BookingStatus }) {
 
   return <Badge className={styles[status]}>{status}</Badge>
 }
+
 const normalizeStatus = <T extends string>(value: string): T =>
   (value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()) as T
 
@@ -43,18 +45,16 @@ export default function BookingPage() {
   const router = useRouter()
 
   const [currentPage, setCurrentPage] = useState(1)
-  const [allBookings, setAllBookings] = useState<Booking[]>([])
-  const [totalBookings, setTotalBookings] = useState(0)
+  const [allFlightsBooking, setAllFlightsBooking] = useState<Booking[]>([])
+  const [totalFlightsBooking, setTotalFlightsBooking] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all')
-  const [typeFilter, setTypeFilter] = useState<BookingType | 'all'>('all')
   const [dateFilter, setDateFilter] = useState('')
   const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [rates, setRates] = useState<Record<string, number>>({})
   const [currency, setCurrency] = useState<Currency>('NGN')
-
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -62,26 +62,27 @@ export default function BookingPage() {
       setCurrentPage(1)
     }, 500)
 
-    return () => clearTimeout(t)
-  }, [search])
+  return () => clearTimeout(t)
+}, [search])
 
 
   useEffect(() => {
-    const load = async () => {
+    const loadFlight = async () => {
+      console.log(loadFlight)
       try {
         setLoading(true)
 
         const res = await fetchFlights({
-          page: currentPage,           
-          limit: UI_PAGE_SIZE,        
+          page: currentPage,
+          limit: 20,
           status: statusFilter !== 'all' ? statusFilter : undefined,
-          type: typeFilter !== 'all' ? typeFilter : undefined,
+          type: "flight",
           date: dateFilter || undefined,
-          search: debouncedSearch || undefined,
+          search: debouncedSearch || undefined
         })
 
-        setAllBookings(Array.isArray(res.data) ? res.data : [])
-        setTotalBookings(res.total ?? 0)
+        setAllFlightsBooking(res.data ?? [])
+        setTotalFlightsBooking(res.total ?? 0)
       } catch (err) {
         console.error(err)
       } finally {
@@ -89,8 +90,8 @@ export default function BookingPage() {
       }
     }
 
-    load()
-  }, [currentPage, statusFilter, typeFilter, dateFilter, debouncedSearch])
+    loadFlight()
+  }, [currentPage, statusFilter, dateFilter, debouncedSearch])
 
   useEffect(() => {
     const loadRates = async () => {
@@ -105,30 +106,17 @@ export default function BookingPage() {
     loadRates()
   }, [])
 
+const filteredBookings = useMemo(() => {
+  const searchLower = search.trim().toLowerCase()
+  if (!searchLower) return allFlightsBooking
 
-  const filteredBookings = useMemo(() => {
-    if (!debouncedSearch) return allBookings
+  return allFlightsBooking.filter((booking) =>
+    booking.id.toLowerCase().includes(searchLower) ||
+    String(booking.user).toLowerCase().includes(searchLower)
+  )
+}, [allFlightsBooking, search])
 
-    return allBookings.filter((b) =>
-      b.id.toLowerCase().includes(debouncedSearch) ||
-      b.user.toLowerCase().includes(debouncedSearch)
-    )
-  }, [allBookings, debouncedSearch])
-
-  const effectiveTotal = debouncedSearch
-    ? filteredBookings.length
-    : totalBookings
-
-  const totalPages = Math.max(1, Math.ceil(effectiveTotal / UI_PAGE_SIZE))
-
-  const paginatedBookings = filteredBookings
-
-const convertAmount = (totalAmount: number) => {
-  if (currency === "NGN") return totalAmount
-  return rates[currency]
-    ? totalAmount * rates[currency]
-    : totalAmount
-}
+  const totalPages = Math.max(1, Math.ceil(totalFlightsBooking / 20))
 
   if (loading) {
     return (
@@ -151,43 +139,57 @@ const convertAmount = (totalAmount: number) => {
           className="bg-white max-w-sm"
         />
 
-        <select
-          value={statusFilter}
-          onChange={(e) =>
-            setStatusFilter(
-              e.target.value === 'all'
-                ? 'all'
-                : normalizeStatus<BookingStatus>(e.target.value)
-            )
-          }
-          className="border rounded px-2 py-1"
-        >
-          <option value="all">All Status</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="pending">Pending</option>
-          <option value="cancelled">Cancelled</option>
-          <option value="failed">Failed</option>
-          <option value="initialized">Initialized</option>
-        </select>
+        <div>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) =>
+              setStatusFilter(value === 'all'
+                ? "all"
+                : normalizeStatus<BookingStatus>(value)
+              )
+            }
+          >
+            <SelectTrigger className="w-140px h-9 bg-muted/30 border-none">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Confirmed">Confirmed</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Cancelled">Cancelled</SelectItem>
+                <SelectItem value="Failed">Failed</SelectItem>
+                <SelectItem value="Initialized">Initialized</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
 
-        <select
-          value={currency}
-          onChange={(e) => setCurrency(e.target.value as Currency)}
-          className="border rounded px-2 py-1 bg-white"
-        >
-          {SUPPORTED_CURRENCIES.map((cur) => (
-            <option key={cur} value={cur}>
-              {cur}
-            </option>
-          ))}
-        </select>
+        <div>
+          <Select
+            value={currency}
+            onValueChange={(value) => setCurrency(value as Currency)}
+          >
+            <SelectTrigger className="w-140px h-9">
+              <SelectValue placeholder="Currency" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {SUPPORTED_CURRENCIES.map((cur) => (
+                  <SelectItem key={cur} value={cur}>
+                    {cur}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
         <Button
           variant="outline"
           onClick={() => {
             setSearch('')
             setDebouncedSearch('')
             setStatusFilter('all')
-            setTypeFilter('all')
             setDateFilter('')
             setCurrentPage(1)
           }}
@@ -210,28 +212,33 @@ const convertAmount = (totalAmount: number) => {
         </TableHeader>
 
         <TableBody>
-          {paginatedBookings.length ? (
-            paginatedBookings.map((b) => (
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-6">
+                <Spinner className="h-6 w-6 mx-auto" />
+              </TableCell>
+            </TableRow>
+          ) : allFlightsBooking.length ? (
+            filteredBookings.map((flight) => (
               <TableRow
-                key={b.id}
-                onClick={() => router.push(`/admin/bookings/${b.id}`)}
+                key={flight.id}
+                onClick={() => router.push(`/admin/bookings/${flight.id}`)}
                 className="cursor-pointer"
               >
-                <TableCell>{b.id}</TableCell>
-                <TableCell>{b.user}</TableCell>
-                <TableCell>{b.flightIdentifier}</TableCell>
+                <TableCell>{flight.id}</TableCell>
+                <TableCell>{String(flight.user)}</TableCell>
+                <TableCell>{flight.flightIdentifier}</TableCell>
                 <TableCell>
-                  <StatusBadge status={b.status} />
+                  <StatusBadge status={flight.status} />
+                </TableCell>
+                <TableCell>
+                  {formatCurrency(
+                    convertCurrency(flight.totalAmount, currency, rates),
+                    currency
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
-                  {convertAmount(b.totalAmount).toLocaleString(
-                    undefined, {
-                    style: "currency",
-                    currency,
-                  })}
-                </TableCell>
-                <TableCell className="text-right">
-                  {new Date(b.created).toLocaleDateString()}
+                  {new Date(flight.created).toLocaleString()}
                 </TableCell>
               </TableRow>
             ))
@@ -246,7 +253,7 @@ const convertAmount = (totalAmount: number) => {
       </BookingTable>
 
       {/* Pagination */}
-      {effectiveTotal > UI_PAGE_SIZE && (
+      {totalFlightsBooking > 20 && (
         <PaginationControl
           currentPage={currentPage}
           totalPages={totalPages}

@@ -24,7 +24,7 @@ export type Booking = {
   flightIdentifier: string;
   status: BookingStatus;
   type: BookingType;
-  totalAmount: number;
+  totalAmount: string;
   provider?: string;
   created: string;
   currency?: 'NGN'
@@ -74,3 +74,4 @@ export type MetricCardProps = {
   icon: React.ElementType;
   onClick?: () => void;
 };
+
